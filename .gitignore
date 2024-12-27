@@ -1,0 +1,30 @@
+# Python-related files
+*.pyc
+*.pyo
+__pycache__/
+
+# Virtual environment folder
+venv/
+
+# Audio recordings
+audio/*.wav
+
+# Text transcripts and summaries
+transcripts/*.txt
+summaries/*.txt
+
+# Log files
+*.log
+
+# Kivy build files
+build/
+dist/
+*.spec
+
+# IDE-specific files
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store  # macOS
+Thumbs.db  # Windows
