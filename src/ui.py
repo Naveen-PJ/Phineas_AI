@@ -46,11 +46,17 @@ class SubjectSelectPage(BoxLayout):
         self.add_widget(main_layout)
 
         # Ask Phineas Button
-        ask_phineas_layout = AnchorLayout(anchor_x='right', anchor_y='bottom', padding=[10, 10])
+        ask_phineas_layout = AnchorLayout(anchor_x='right', anchor_y='bottom', padding=[10, 70])
         ask_phineas_btn = Button(text='Ask Phineas Anything...', size_hint=(None, None), size=(200, 50))
         ask_phineas_btn.bind(on_press=self.open_phineas_popup)
         ask_phineas_layout.add_widget(ask_phineas_btn)
         self.add_widget(ask_phineas_layout)
+
+        # Footer
+        footer = AnchorLayout(anchor_x='right', anchor_y='bottom', padding=[10, 10])
+        footer_label = Label(text='Phineas AI Inc.', size_hint=(None, None))
+        footer.add_widget(footer_label)
+        self.add_widget(footer)
 
     def open_phineas_popup(self, instance):
         popup = PhineasPopup()
@@ -106,7 +112,7 @@ class SubjectSelectedPage(BoxLayout):
         self.add_widget(main_layout)
 
         # Ask Phineas Button
-        ask_phineas_layout = AnchorLayout(anchor_x='right', anchor_y='bottom', padding=[10, 70])
+        ask_phineas_layout = AnchorLayout(anchor_x='right', anchor_y='bottom', padding=[10, 90])
         ask_phineas_btn = Button(text='Ask Phineas Anything...', size_hint=(None, None), size=(200, 50))
         ask_phineas_btn.bind(on_press=self.open_phineas_popup)
         ask_phineas_layout.add_widget(ask_phineas_btn)
@@ -118,6 +124,12 @@ class SubjectSelectedPage(BoxLayout):
         leave_btn.bind(on_press=switch_to_subject_select_page)
         leave_layout.add_widget(leave_btn)
         self.add_widget(leave_layout)
+
+        # Footer
+        footer = AnchorLayout(anchor_x='right', anchor_y='bottom', padding=[10, 10])
+        footer_label = Label(text='Phineas AI Inc.', size_hint=(None, None))
+        footer.add_widget(footer_label)
+        self.add_widget(footer)
 
     def open_phineas_popup(self, instance):
         popup = PhineasPopup()
