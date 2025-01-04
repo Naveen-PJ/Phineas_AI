@@ -61,7 +61,7 @@ class Phineas_AI:
 
 # Example usage
 if __name__ == "__main__":
-    helper = LectureHelper()
+    helper = Phineas_AI()
 
     # Record audio for 10 seconds
     audio_file = helper.record_audio(10)
