@@ -1,7 +1,7 @@
-# Lecture Recording and Summarization Software
+# Phineas_AI
 
 ## Overview
-This project is a Python-based software designed to assist students and professors by automating the process of lecture recording, transcription, and summarization. The software also includes a feature to clarify student doubts using a free large language model (LLM).
+This project is a Python-based software designed to assist students and professors by automating the process of lecture recording, transcription, and summarization. The software also includes a feature to clarify doubts using a free large language model (LLM).
 
 ### Key Features
 1. **Audio Recording**:

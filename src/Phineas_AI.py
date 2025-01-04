@@ -4,7 +4,7 @@ import whisper
 from transformers import pipeline
 from datetime import datetime
 
-class LectureHelper:
+class Phineas_AI:
     def __init__(self):
         # Initialize resources if needed
         self.transcription_model = whisper.load_model("base")
