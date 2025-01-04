@@ -28,12 +28,12 @@ class SubjectSelectPage(BoxLayout):
         main_layout = BoxLayout(orientation='horizontal')
 
         # Subject List
-        subject_list = BoxLayout(orientation='vertical', size_hint_x=0.3)
-        subject_list.add_widget(Label(text='Choose Subject:', size_hint_y=None, height=30, halign='left'))
+        subject_list = BoxLayout(orientation='vertical', size_hint_x=0.3, spacing=20, padding=[70, 70, 0, 0])
+        subject_list.add_widget(Label(text='Choose Subject:', size_hint_y=None, height=30, halign='left', valign='middle'))
         
-        subjects = ['Subject 1', 'Subject 2', 'Subject 3', 'Subject 4']
+        subjects = ['Python', 'Computer Networks', 'Statistics', 'C Programming']
         for subject in subjects:
-            btn = Button(text=subject, size_hint_y=None, height=50)
+            btn = Button(text=subject, size_hint_y=None, height=50, background_color=(233, 207, 221, 0.8), color=(0, 0, 0, 1))
             btn.bind(on_press=switch_to_subject_page)
             subject_list.add_widget(btn)
         
@@ -46,7 +46,7 @@ class SubjectSelectPage(BoxLayout):
         self.add_widget(main_layout)
 
         # Ask Phineas Button
-        ask_phineas_layout = AnchorLayout(anchor_x='right', anchor_y='bottom', padding=[10, 70])
+        ask_phineas_layout = AnchorLayout(anchor_x='right', anchor_y='bottom', padding=[10, 210])  # Adjusted padding
         ask_phineas_btn = Button(text='Ask Phineas Anything...', size_hint=(None, None), size=(200, 50))
         ask_phineas_btn.bind(on_press=self.open_phineas_popup)
         ask_phineas_layout.add_widget(ask_phineas_btn)
