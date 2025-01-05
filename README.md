@@ -20,7 +20,6 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
 
 - **Python**: The primary programming language used to build the software.
 - **Transformers**: The `transformers` library by Hugging Face is used for text summarization with the `facebook/bart-large-cnn` model.
-- **spaCy**: Used for general NLP processing (though not used for summarization in this version).
 - **Kivy**: A Python framework for building the graphical user interface.
 - **Speech Recognition**: Used to transcribe recorded audio to text.
 """
