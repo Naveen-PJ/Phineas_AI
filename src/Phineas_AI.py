@@ -4,16 +4,8 @@ from datetime import datetime
 import threading
 import os
 
-foldertrans = os.path.join("Phineas_AI", "Transcriptfolder")
-foldersum = os.path.join("Phineas_AI", "Summeryfolder")
-
-# Ensure the folders exist
-if not os.path.exists(foldertrans):
-    os.makedirs(foldertrans)
-if not os.path.exists(foldersum):
-    os.makedirs(foldersum)
-
 class Phineas_AI:
+
     def __init__(self):
         self.summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
         self.recognizer = sr.Recognizer()
@@ -23,15 +15,28 @@ class Phineas_AI:
         self.transcription_thread = None
         self.transcription_result = ""
         self.transcription_filename = ""
+        self.subname=None
+        self.foldertrans = None
+        self.foldersum = None
+        
 
-    def start_transcription(self, folder=foldertrans):
+    def start_transcription(self,subname):
+        self.subname = subname
+        self.foldertrans = os.path.join("Phineas_AI","Records",self.subname,"Transcript_Folder")
+        self.foldersum=os.path.join("Phineas_AI","Records",self.subname,"Summery_Folder")
+        # Ensure the folders exist
+        if not os.path.exists(self.foldertrans):
+            os.makedirs(self.foldertrans)
+        if not os.path.exists(self.foldersum):
+            os.makedirs(self.foldersum)
+        folder = self.foldertrans
         """Start the transcription process."""
         if self.transcribing:
             print("Transcription is already in progress.")
             return
 
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.transcription_filename = f"{folder}\Transcript_{timestamp}.txt"
+        timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
+        self.transcription_filename = f"{folder}/{self.subname}{timestamp}.txt"
         self.transcribing = True
         self.paused = False
         self.transcription_result = ""
@@ -48,7 +53,7 @@ class Phineas_AI:
                 if not self.paused:
                     try:
                         print("Listening...")
-                        audio = self.recognizer.listen(source)
+                        audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=None)
                         print("Transcribing...")
                         text = self.recognizer.recognize_google(audio)
                         self.transcription_result += text + " "
@@ -66,20 +71,15 @@ class Phineas_AI:
             with open(self.transcription_filename, "w") as f:
                 f.write(self.transcription_result)
             print(f"Transcript saved to {self.transcription_filename}")
+            self.summarize_text(self.transcription_filename)
         else:
             print("No transcription result to save.")
 
-    def pause_transcription(self):
-        """Pause the transcription."""
-        if self.transcribing and not self.paused:
-            self.paused = True
-            print("Transcription paused.")
-
-    def resume_transcription(self):
-        """Resume the transcription."""
-        if self.transcribing and self.paused:
-            self.paused = False
-            print("Transcription resumed.")
+    def pause_and_resume(self):
+        """Pause or resume the transcription."""
+        if self.transcribing:
+            self.paused = not self.paused
+            print("Transcription paused." if self.paused else "Transcription resumed.")
 
     def stop_transcription(self):
         """Stop the transcription."""
@@ -89,21 +89,28 @@ class Phineas_AI:
             if self.transcription_thread and self.transcription_thread.is_alive():
                 self.transcription_thread.join()
 
-    def summarize_text(self, input_file, folder=foldersum):
+    def summarize_text(self, input_file):
+        folder = self.foldersum
         """Summarize text and save the summary."""
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        output_file = f"{folder}\Summary_{timestamp}.txt"
+        timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
+        output_file = f"{folder}/{self.subname}_Summary_{timestamp}.txt"
 
         with open(input_file, "r") as f:
             text = f.read()
 
         print("Summarizing text...")
-        summary = self.summarizer(text, max_length=150, min_length=30, do_sample=False)[0]['summary_text']
+        summary = self.summarizer(text, max_length=1500, min_length=10, do_sample=False)[0]['summary_text']
         with open(output_file, "w") as f:
             f.write(summary)
 
         print(f"Summary saved to {output_file}")
         return output_file
+    
+
+    def openrepo(self):
+        path=os.path.join("Phineas_AI","Records")
+        os.startfile(path)
+
 
 # Example usage
 if __name__ == "__main__":
@@ -127,6 +134,6 @@ if __name__ == "__main__":
     helper.stop_transcription()
 
     # Summarize the transcript
-    transcript_file = helper.transcription_filename
-    if transcript_file:
-        summary_file = helper.summarize_text(transcript_file)
+    #transcript_file = helper.transcription_filename
+    #if transcript_file:
+    #    summary_file = helper.summarize_text(transcript_file)

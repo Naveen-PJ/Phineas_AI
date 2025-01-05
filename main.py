@@ -6,6 +6,9 @@ from kivy.uix.dropdown import DropDown
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
+from src.Phineas_AI import Phineas_AI
+
+ai = Phineas_AI()
 
 class SubjectSelectPage(BoxLayout):
     def __init__(self, switch_to_subject_page, **kwargs):
@@ -34,7 +37,7 @@ class SubjectSelectPage(BoxLayout):
         subjects = ['Python', 'Computer Networks', 'Statistics', 'C Programming']
         for subject in subjects:
             btn = Button(text=subject, size_hint_y=None, height=50, background_color=(233, 207, 221, 0.8), color=(0, 0, 0, 1))
-            btn.bind(on_press=switch_to_subject_page)
+            btn.bind(on_press=lambda btn: switch_to_subject_page(btn.text))
             subject_list.add_widget(btn)
         
         main_layout.add_widget(subject_list)
@@ -63,7 +66,7 @@ class SubjectSelectPage(BoxLayout):
         popup.open()
 
 class SubjectSelectedPage(BoxLayout):
-    def __init__(self, switch_to_subject_select_page, **kwargs):
+    def __init__(self, subject_name, switch_to_subject_select_page, **kwargs):
         super().__init__(**kwargs)
         self.orientation = 'vertical'
         self.padding = 10
@@ -87,15 +90,23 @@ class SubjectSelectedPage(BoxLayout):
 
         # Subject and Repo
         subject_repo_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=50, spacing=10)
-        subject_repo_layout.add_widget(Label(text='Subject Chosen', font_size=20))
-        subject_repo_layout.add_widget(Button(text='Access Repo', font_size=14))
+        subject_repo_layout.add_widget(Label(text=subject_name, font_size=20))
+        accessrepobutton=Button(text='Access Repo', font_size=14)
+        accessrepobutton.bind(on_press=lambda instance: ai.openrepo())
+        subject_repo_layout.add_widget(accessrepobutton)
         left_layout.add_widget(subject_repo_layout)
 
         # Transcription Controls
         transcription_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=50, spacing=10)
-        transcription_layout.add_widget(Button(text='Start Transcription'))
-        transcription_layout.add_widget(Button(text='Pause'))
-        transcription_layout.add_widget(Button(text='Stop Transcription'))
+        startbutton = Button(text='Start Transcription')
+        startbutton.bind(on_press=lambda instance: ai.start_transcription(subject_name))
+        transcription_layout.add_widget(startbutton)
+        puasebutton = Button(text='Pause')
+        puasebutton.bind(on_press=lambda instance: ai.pause_and_resume())
+        transcription_layout.add_widget(puasebutton)
+        stopbutton = Button(text='Stop Transcription')
+        stopbutton.bind(on_press=lambda instance: ai.stop_transcription())
+        transcription_layout.add_widget(stopbutton)
         left_layout.add_widget(transcription_layout)
 
         main_layout.add_widget(left_layout)
@@ -166,11 +177,12 @@ class PhineasApp(App):
     def build(self):
         self.root = BoxLayout()
         self.subject_select_page = SubjectSelectPage(self.switch_to_subject_page)
-        self.subject_selected_page = SubjectSelectedPage(self.switch_to_subject_select_page)
+        self.subject_selected_page = None  # Initialize it to None
         self.root.add_widget(self.subject_select_page)
         return self.root
 
-    def switch_to_subject_page(self, instance):
+    def switch_to_subject_page(self, subject_name):
+        self.subject_selected_page = SubjectSelectedPage(subject_name, self.switch_to_subject_select_page)
         self.root.clear_widgets()
         self.root.add_widget(self.subject_selected_page)
 
