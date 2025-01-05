@@ -1,101 +1,98 @@
-import sounddevice as sd
-import wave
-import whisper
+import speech_recognition as sr
 from transformers import pipeline
 from datetime import datetime
 import threading
+import os
+
+foldertrans = os.path.join("Phineas_AI", "Transcriptfolder")
+foldersum = os.path.join("Phineas_AI", "Summeryfolder")
+
+# Ensure the folders exist
+if not os.path.exists(foldertrans):
+    os.makedirs(foldertrans)
+if not os.path.exists(foldersum):
+    os.makedirs(foldersum)
 
 class Phineas_AI:
     def __init__(self):
-        self.transcription_model = whisper.load_model("base")
-        self.summarizer = pipeline("summarization")
-        self.recording = False
+        self.summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+        self.recognizer = sr.Recognizer()
+        self.mic = sr.Microphone()
+        self.transcribing = False
         self.paused = False
-        self.audio_frames = []
-        self.fs = 44100  # Sample rate
-        self.recording_thread = None
-        self.audio_filename = ""
+        self.transcription_thread = None
+        self.transcription_result = ""
+        self.transcription_filename = ""
 
-    def start_recording(self, folder="audio/"):
-        """Start the recording process."""
-        if self.recording:
-            print("Recording is already in progress.")
+    def start_transcription(self, folder=foldertrans):
+        """Start the transcription process."""
+        if self.transcribing:
+            print("Transcription is already in progress.")
             return
 
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.audio_filename = f"{folder}lecture_{timestamp}.wav"
-        self.recording = True
+        self.transcription_filename = f"{folder}\Transcript_{timestamp}.txt"
+        self.transcribing = True
         self.paused = False
-        self.audio_frames = []
-        
-        print("Starting recording...")
-        self.recording_thread = threading.Thread(target=self._record_audio, args=(self.audio_filename,))
-        self.recording_thread.start()
+        self.transcription_result = ""
 
-    def _record_audio(self, filename):
-        """Internal method to handle audio recording."""
-        def callback(indata, frames, time, status):
-            if self.recording and not self.paused:
-                self.audio_frames.append(indata.copy())
+        print("Starting transcription...")
+        self.transcription_thread = threading.Thread(target=self._transcribe_audio)
+        self.transcription_thread.start()
 
-        print("Recording started. Press 'pause' or 'stop' to control recording.")
+    def _transcribe_audio(self):
+        """Internal method to handle audio transcription."""
+        with self.mic as source:
+            self.recognizer.adjust_for_ambient_noise(source, duration=1)
+            while self.transcribing:
+                if not self.paused:
+                    try:
+                        print("Listening...")
+                        audio = self.recognizer.listen(source)
+                        print("Transcribing...")
+                        text = self.recognizer.recognize_google(audio)
+                        self.transcription_result += text + " "
+                        print(f"Recognized Text: {text}")
+                    except sr.RequestError as e:
+                        print(f"API unavailable or unresponsive: {e}")
+                    except sr.UnknownValueError:
+                        print("Unable to recognize speech. Skipping this part.")
+                    except Exception as e:
+                        print(f"An error occurred: {e}")
 
-        with sd.InputStream(samplerate=self.fs, channels=2, callback=callback):
-            while self.recording:
-                sd.sleep(100)  # Allow time for pausing or stopping
+        # Print and Save the transcription result
+        print(f"Final Transcription Result: {self.transcription_result}")
+        if self.transcription_result:
+            with open(self.transcription_filename, "w") as f:
+                f.write(self.transcription_result)
+            print(f"Transcript saved to {self.transcription_filename}")
+        else:
+            print("No transcription result to save.")
 
-        print("Recording complete. Saving file...")
-
-        with wave.open(filename, 'wb') as wf:
-            wf.setnchannels(2)
-            wf.setsampwidth(2)
-            wf.setframerate(self.fs)
-            wf.writeframes(b''.join([frame.tobytes() for frame in self.audio_frames]))
-
-        print(f"Saved to {filename}")
-
-    def pause_recording(self):
-        """Pause the recording."""
-        if self.recording and not self.paused:
+    def pause_transcription(self):
+        """Pause the transcription."""
+        if self.transcribing and not self.paused:
             self.paused = True
-            print("Recording paused.")
+            print("Transcription paused.")
 
-    def resume_recording(self):
-        """Resume the recording."""
-        if self.recording and self.paused:
+    def resume_transcription(self):
+        """Resume the transcription."""
+        if self.transcribing and self.paused:
             self.paused = False
-            print("Recording resumed.")
+            print("Transcription resumed.")
 
-    def stop_recording(self):
-        """Stop the recording."""
-        if self.recording:
-            self.recording = False
-            self.paused = False
-            print("Recording stopped.")
-            if self.recording_thread and self.recording_thread.is_alive():
-                self.recording_thread.join()
+    def stop_transcription(self):
+        """Stop the transcription."""
+        if self.transcribing:
+            self.transcribing = False
+            print("Transcription stopped.")
+            if self.transcription_thread and self.transcription_thread.is_alive():
+                self.transcription_thread.join()
 
-    def transcribe_audio(self, folder="transcripts/"):
-        """Transcribe audio and save the transcript."""
-        if not self.audio_filename:
-            print("No audio file available for transcription.")
-            return None
-
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        output_file = f"{folder}transcript_{timestamp}.txt"
-
-        print("Transcribing audio...")
-        result = self.transcription_model.transcribe(self.audio_filename)
-        with open(output_file, "w") as f:
-            f.write(result['text'])
-
-        print(f"Transcript saved to {output_file}")
-        return output_file
-
-    def summarize_text(self, input_file, folder="summaries/"):
+    def summarize_text(self, input_file, folder=foldersum):
         """Summarize text and save the summary."""
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        output_file = f"{folder}summary_{timestamp}.txt"
+        output_file = f"{folder}\Summary_{timestamp}.txt"
 
         with open(input_file, "r") as f:
             text = f.read()
@@ -112,19 +109,24 @@ class Phineas_AI:
 if __name__ == "__main__":
     helper = Phineas_AI()
 
-    # Start recording
-    helper.start_recording()
+    # Start transcription
+    helper.start_transcription()
 
-    # Simulate user actions (pause, resume, stop)
     import time
-    time.sleep(5)  # Simulate 5 seconds of recording
-    helper.pause_recording()
-    time.sleep(2)  # Simulate pause duration
-    helper.resume_recording()
-    time.sleep(5)  # Simulate additional recording time
-    helper.stop_recording()
+    time.sleep(10)  # Simulate 10 seconds of transcription
 
-    # Transcribe and summarize the audio
-    transcript_file = helper.transcribe_audio()
+    # Pause transcription
+    helper.pause_transcription()
+    time.sleep(2)  # Simulate pause duration
+
+    # Resume transcription
+    helper.resume_transcription()
+    time.sleep(10)  # Simulate additional transcription time
+
+    # Stop transcription
+    helper.stop_transcription()
+
+    # Summarize the transcript
+    transcript_file = helper.transcription_filename
     if transcript_file:
         summary_file = helper.summarize_text(transcript_file)
