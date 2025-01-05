@@ -1,111 +1,93 @@
 # Phineas_AI
 
 ## Overview
-This project is a Python-based software designed to assist students and professors by automating the process of lecture recording, transcription, and summarization. The software also includes a feature to clarify doubts using a free large language model (LLM).
+Phineas AI is a Python-based software designed to record entire lectures or classes, transcribe them into text, and generate concise summaries. The summaries include key points such as homework details, additional points discussed by the professor, and answers to student doubts. The software uses the `facebook/bart-large-cnn` model for summarization and has a user-friendly interface built with Kivy.
 
 ### Key Features
-1. **Audio Recording**:
-   - Record lectures in audio format (e.g., `.wav`) using open-source libraries.
-2. **Transcription**:
-   - Convert audio to text using OpenAI Whisper, an open-source speech-to-text model.
-3. **Summarization**:
-   - Generate concise summaries of the lecture, including key points, homework details, and additional insights, using free NLP models.
-4. **Doubt Clarification**:
-   - Address student questions in real-time or post-lecture by leveraging open-source LLMs for context-based answers.
-5. **User Interface**:
-   - A graphical user interface (GUI) built with Kivy for ease of use.
-6. **Planned Feature: Live Transcription**:
-   - Live transcription functionality will be added later, allowing real-time text display during lectures.
+
+1. **Transcription**:
+   - Converts the recorded audio into text using speech recognition.
+2. **Summarization**:
+   - Generates summaries of the lecture using the `facebook/bart-large-cnn` model, including key points, homework details, and professor's extra discussions.
+3. **Doubt Clarification**:
+   - A future feature to clarify students' doubts during the lecture.
+4. **User Interface**:
+   - A simple Kivy-based interface for an easy user experience.
 
 ---
 
 ## Technologies Used
 
-### Python Libraries
-- **Audio Processing**:
-  - `sounddevice`: For recording audio.
-  - `wave`: For handling audio files.
-- **Speech-to-Text**:
-  - OpenAI Whisper: For transcription.
-- **Natural Language Processing**:
-  - Hugging Face Transformers: For summarization and question answering.
-  - `spaCy`: For extracting key points and preprocessing text.
-- **User Interface**:
-  - `Kivy`: For creating a cross-platform GUI.
+- **Python**: The primary programming language used to build the software.
+- **Transformers**: The `transformers` library by Hugging Face is used for text summarization with the `facebook/bart-large-cnn` model.
+- **spaCy**: Used for general NLP processing (though not used for summarization in this version).
+- **Kivy**: A Python framework for building the graphical user interface.
+- **Speech Recognition**: Used to transcribe recorded audio to text.
+"""
 
 ---
 
 ## Installation
 
-### Prerequisites
-- Python 3.8+
-- Virtual environment (optional but recommended)
-- CUDA-compatible GPU (optional for faster transcription)
-
-### Steps
 1. Clone the repository:
    ```bash
-   git clone <repository_url>
-   cd <repository_folder>
+   git clone https://github.com/Naveen-PJ/Phineas_AI.git
+   cd Phineas_AI
    ```
-2. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-3. Install required dependencies:
+
+2. Install the required dependencies:
    ```bash
    pip install -r requirements.txt
    ```
+
+3. Ensure you have the following libraries installed:
+   - `transformers` (for the `facebook/bart-large-cnn` model)
+   - `Kivy`
+   - `speechRecognition`
+   - Other dependencies listed in `requirements.txt`.
+
+4. Download the necessary Hugging Face model for summarization (this will be handled automatically by the `transformers` library when needed):
+   ```bash
+   pip install transformers
+
+### Prerequisites
+- Python 3.8+
+- pip (Python package installer)
+- A working internet connection (for downloading required models)
 
 ---
 
 ## Usage
 
 ### Recording Audio
-1. Run the recording script:
+1. To run the software, use the following command:
    ```bash
-   python record_audio.py
+   python main.py
    ```
-2. The audio file will be saved in the `audio/` directory.
 
-### Transcription
-1. Transcribe the recorded audio:
-   ```bash
-   python transcribe_audio.py <audio_file>
-   ```
-2. The transcript will be saved as a `.txt` file in the `transcripts/` directory.
+2. The program will begin recording the lecture. Once the lecture is complete, it will transcribe the audio and generate a summary containing the key points discussed during the lecture, using the `facebook/bart-large-cnn` model.
 
-### Summarization
-1. Summarize the lecture transcript:
-   ```bash
-   python summarize_text.py <transcript_file>
-   ```
-2. The summary will be displayed and saved to the `summaries/` directory.
-
-### Doubt Clarification
-1. Ask a question about the lecture:
-   ```bash
-   python clarify_doubt.py <transcript_file> "Your question here"
-   ```
-2. The system will provide a context-based answer.
+3. After the lecture, the summary will be presented. The software will also have a feature to clarify any doubts raised during the lecture (future feature).
 
 ---
 
 ## Folder Structure
 ```
-project-directory/
-|-- audio/
-|   |-- recorded_lecture.wav
-|-- transcripts/
-|   |-- transcript.txt
-|-- summaries/
-|   |-- summary.txt
+Phineas_AI/
+|-- Records/
+|   |-- subject1/
+|   |   |-- Transcript_Folder
+|   |   |-- Summary_Folder
+|   |-- subject2/
+|   |   |-- Transcript_Folder
+|   |   |-- Summary_Folder
+|   ...
 |-- src/
-|   |-- record_audio.py
-|   |-- transcribe_audio.py
-|   |-- summarize_text.py
-|   |-- clarify_doubt.py
+|   |-- __pycache__/
+|   |-- __init__.py
+|   |-- Phineas_AI.py
+|-- main.py
+|-- .gitignore
 |-- requirements.txt
 |-- README.md
 ```
@@ -114,13 +96,15 @@ project-directory/
 
 ## Future Enhancements
 1. **Live Transcription**:
-   - Add real-time transcription functionality to display text during lectures.
+   - Real-time transcription of lectures to be implemented.
 2. **Enhanced UI**:
    - A more intuitive graphical interface with KivyMD components.
 3. **Database Integration**:
    - Store transcripts, summaries, and doubts for future reference.
 4. **Customization**:
    - Allow users to choose summarization styles or formats.
+5. **Doubt Clarification**:
+   - Providing responses to students' doubts during the lecture using NLP (future feature).
 
 ---
 
