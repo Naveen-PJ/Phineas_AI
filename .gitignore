@@ -31,4 +31,4 @@ config.py
 *.bak
 
 # Ignore all text files in the records directory
-records/*.txt
+Records
