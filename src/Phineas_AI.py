@@ -15,28 +15,40 @@ class Phineas_AI:
         self.transcription_thread = None
         self.transcription_result = ""
         self.transcription_filename = ""
-        self.subname=None
+
+        self.subname = None
         self.foldertrans = None
         self.foldersum = None
-        
+        self.folderaudio = None
+        self.audiofilename = None
 
-    def start_transcription(self,subname):
+        self.lock = threading.Lock()
+        self.initialize_folders()
+
+    def initialize_folders(self):
+        base_path = os.path.join("Phineas_AI", "Records")
+        if not os.path.exists(base_path):
+            os.makedirs(base_path)
+
+    def create_subfolders(self):
+        self.foldertrans = os.path.join("Phineas_AI", "Records", self.subname, "Transcript_Folder")
+        self.foldersum = os.path.join("Phineas_AI", "Records", self.subname, "Summary_Folder")
+        self.folderaudio = os.path.join("Phineas_AI", "Records", self.subname, "Audio_Folder")
+
+        for folder in [self.foldertrans, self.foldersum, self.folderaudio]:
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+
+    def start_transcription(self, subname):
         self.subname = subname
-        self.foldertrans = os.path.join("Phineas_AI","Records",self.subname,"Transcript_Folder")
-        self.foldersum=os.path.join("Phineas_AI","Records",self.subname,"Summery_Folder")
-        # Ensure the folders exist
-        if not os.path.exists(self.foldertrans):
-            os.makedirs(self.foldertrans)
-        if not os.path.exists(self.foldersum):
-            os.makedirs(self.foldersum)
-        folder = self.foldertrans
-        """Start the transcription process."""
+        self.create_subfolders()
+
         if self.transcribing:
             print("Transcription is already in progress.")
             return
 
         timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
-        self.transcription_filename = f"{folder}/{self.subname}{timestamp}.txt"
+        self.transcription_filename = f"{self.foldertrans}/{self.subname}{timestamp}.txt"
         self.transcribing = True
         self.paused = False
         self.transcription_result = ""
@@ -45,28 +57,44 @@ class Phineas_AI:
         self.transcription_thread = threading.Thread(target=self._transcribe_audio)
         self.transcription_thread.start()
 
-    def _transcribe_audio(self):
-        """Internal method to handle audio transcription."""
+    def listen(self):
+        timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
+        self.audiofilename = f"{self.folderaudio}/{self.subname}{timestamp}.wav"
+        audio_data = []
+
         with self.mic as source:
-            self.recognizer.adjust_for_ambient_noise(source, duration=1)
+            self.recognizer.adjust_for_ambient_noise(source)
+            print("Listening...")
             while self.transcribing:
                 if not self.paused:
                     try:
-                        print("Listening...")
-                        audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=None)
-                        print("Transcribing...")
-                        text = self.recognizer.recognize_google(audio)
-                        self.transcription_result += text + " "
-                        print(f"Recognized Text: {text}")
-                    except sr.RequestError as e:
-                        print(f"API unavailable or unresponsive: {e}")
-                    except sr.UnknownValueError:
-                        print("Unable to recognize speech. Skipping this part.")
+                        audio = self.recognizer.listen(source, timeout=5)
+                        audio_data.append(audio)
+                    except sr.WaitTimeoutError:
+                        print("Listening timed out while waiting for phrase to start.")
                     except Exception as e:
-                        print(f"An error occurred: {e}")
+                        print(f"An error occurred while listening: {e}")
 
-        # Print and Save the transcription result
-        print(f"Final Transcription Result: {self.transcription_result}")
+        self.save_audio_chunk(audio_data)
+
+    def save_audio_chunk(self, audio_data):
+        with open(self.audiofilename, "wb") as file:
+            for audio in audio_data:
+                file.write(audio.get_wav_data())
+        print(f"Audio has been saved to '{self.audiofilename}'.")
+
+    def transcribe(self):
+        try:
+            with sr.AudioFile(self.audiofilename) as source:
+                audio = self.recognizer.record(source)
+            self.transcription_result = self.recognizer.recognize_google(audio)
+        except sr.UnknownValueError:
+            print("Speech Recognition could not understand the audio.")
+        except sr.RequestError as e:
+            print(f"Could not request results from the Speech Recognition service; {e}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
         if self.transcription_result:
             with open(self.transcription_filename, "w") as f:
                 f.write(self.transcription_result)
@@ -75,25 +103,35 @@ class Phineas_AI:
         else:
             print("No transcription result to save.")
 
-    def pause_and_resume(self):
-        """Pause or resume the transcription."""
-        if self.transcribing:
-            self.paused = not self.paused
-            print("Transcription paused." if self.paused else "Transcription resumed.")
+    def _transcribe_audio(self):
+        while self.transcribing:
+            if not self.paused:
+                self.listen()
+                self.transcribe()
+
+    def pause_transcription(self):
+        with self.lock:
+            if self.transcribing:
+                self.paused = True
+                print("Transcription paused.")
+
+    def resume_transcription(self):
+        with self.lock:
+            if self.transcribing and self.paused:
+                self.paused = False
+                print("Transcription resumed.")
 
     def stop_transcription(self):
-        """Stop the transcription."""
-        if self.transcribing:
-            self.transcribing = False
-            print("Transcription stopped.")
-            if self.transcription_thread and self.transcription_thread.is_alive():
-                self.transcription_thread.join()
+        with self.lock:
+            if self.transcribing:
+                self.transcribing = False
+                print("Transcription stopped.")
+                if self.transcription_thread and self.transcription_thread.is_alive():
+                    self.transcription_thread.join()
 
     def summarize_text(self, input_file):
-        folder = self.foldersum
-        """Summarize text and save the summary."""
         timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
-        output_file = f"{folder}/{self.subname}_Summary_{timestamp}.txt"
+        output_file = f"{self.foldersum}/{self.subname}_Summary_{timestamp}.txt"
 
         with open(input_file, "r") as f:
             text = f.read()
@@ -105,19 +143,17 @@ class Phineas_AI:
 
         print(f"Summary saved to {output_file}")
         return output_file
-    
 
     def openrepo(self):
-        path=os.path.join("Phineas_AI","Records")
+        path = os.path.join("Phineas_AI", "Records")
         os.startfile(path)
-
 
 # Example usage
 if __name__ == "__main__":
     helper = Phineas_AI()
 
     # Start transcription
-    helper.start_transcription()
+    helper.start_transcription("Subject_Name")
 
     import time
     time.sleep(10)  # Simulate 10 seconds of transcription
@@ -132,8 +168,3 @@ if __name__ == "__main__":
 
     # Stop transcription
     helper.stop_transcription()
-
-    # Summarize the transcript
-    #transcript_file = helper.transcription_filename
-    #if transcript_file:
-    #    summary_file = helper.summarize_text(transcript_file)
