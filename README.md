@@ -21,8 +21,8 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
 - **Python**: The primary programming language used to build the software.
 - **Transformers**: The `transformers` library by Hugging Face is used for text summarization with the `facebook/bart-large-cnn` model.
 - **Kivy**: A Python framework for building the graphical user interface.
-- **Speech Recognition**: Used to transcribe recorded audio to text.
-"""
+- **Speech Recognition**: Used to record audio.
+- **Whisper**: Used for transcribing audio using the Whisper model.
 
 ---
 
@@ -42,17 +42,21 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
 3. Ensure you have the following libraries installed:
    - `transformers` (for the `facebook/bart-large-cnn` model)
    - `Kivy`
-   - `speechRecognition`
+   - `SpeechRecognition`
+   - `whisper`
    - Other dependencies listed in `requirements.txt`.
+   - **ffmpeg** (required for OpenAI-Whisper to handle audio file preprocessing)
 
 4. Download the necessary Hugging Face model for summarization (this will be handled automatically by the `transformers` library when needed):
    ```bash
    pip install transformers
+   ```
 
 ### Prerequisites
 - Python 3.8+
 - pip (Python package installer)
 - A working internet connection (for downloading required models)
+- **ffmpeg** (required for OpenAI-Whisper to handle audio file preprocessing)
 
 ---
 
@@ -81,6 +85,9 @@ Phineas_AI/
 |   |   |-- Transcript_Folder
 |   |   |-- Summary_Folder
 |   ...
+|-- Logs/  # .log files are created only if any error occurs during the execution of the program
+|   |-- log1.log
+|   |-- log2.log
 |-- src/
 |   |-- __pycache__/
 |   |-- __init__.py

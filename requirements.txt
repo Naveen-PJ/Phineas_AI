@@ -1,5 +1,5 @@
-transformers==4.47.1   # For text summarization
-kivy==2.3.1            # For building the GUI
-SpeechRecognition==3.13.0 #For transcribing the audio
-PyAudio==0.2.14
-tf-keras==2.18.0
+transformers   # For text summarization
+kivy            # For building the GUI
+SpeechRecognition # For transcribing the audio
+PyAudio
+whisper           # For Whisper model

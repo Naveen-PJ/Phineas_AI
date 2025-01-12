@@ -3,11 +3,14 @@ from transformers import pipeline
 from datetime import datetime
 import threading
 import os
+import whisper
+import logging
 
 class Phineas_AI:
 
     def __init__(self):
         self.summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+        self.whisper_model = whisper.load_model("base")
         self.recognizer = sr.Recognizer()
         self.mic = sr.Microphone()
         self.transcribing = False
@@ -24,6 +27,18 @@ class Phineas_AI:
 
         self.lock = threading.Lock()
         self.initialize_folders()
+
+        # Ensure the Logs directory exists
+        log_dir = os.path.join("Phineas_AI", "Logs")
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+        # Set up logging to save to a file in the Logs directory
+        logging.basicConfig(
+            filename=os.path.join(log_dir, 'phineas_ai.log'),  # Specify the log file path
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s'
+        )
 
     def initialize_folders(self):
         base_path = os.path.join("Phineas_AI", "Records")
@@ -44,7 +59,7 @@ class Phineas_AI:
         self.create_subfolders()
 
         if self.transcribing:
-            print("Transcription is already in progress.")
+            logging.info("Transcription is already in progress.")
             return
 
         timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
@@ -53,79 +68,94 @@ class Phineas_AI:
         self.paused = False
         self.transcription_result = ""
 
-        print("Starting transcription...")
+        logging.info("Starting transcription...")
         self.transcription_thread = threading.Thread(target=self._transcribe_audio)
         self.transcription_thread.start()
 
     def listen(self):
-        timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
-        self.audiofilename = f"{self.folderaudio}/{self.subname}{timestamp}.wav"
         audio_data = []
+        while self.transcribing:
+            timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
+            self.audiofilename = f"{self.folderaudio}/{self.subname}{timestamp}.wav"
 
-        with self.mic as source:
-            self.recognizer.adjust_for_ambient_noise(source)
-            print("Listening...")
-            while self.transcribing:
+            with self.mic as source:
+                self.recognizer.adjust_for_ambient_noise(source)
+                logging.info("Listening...")
+
                 if not self.paused:
                     try:
-                        audio = self.recognizer.listen(source, timeout=5)
+                        audio = self.recognizer.listen(source, timeout=60)  # Set listening timeout to 60 seconds
                         audio_data.append(audio)
                     except sr.WaitTimeoutError:
-                        print("Listening timed out while waiting for phrase to start.")
+                        logging.warning("Listening timed out while waiting for phrase to start.")
                     except Exception as e:
-                        print(f"An error occurred while listening: {e}")
+                        logging.error(f"An error occurred while listening: {e}")
 
-        self.save_audio_chunk(audio_data)
+            if len(audio_data) >= 5:  # Buffer 5 chunks before saving and transcribing
+                self.save_audio_chunk(audio_data)
+                self.transcribe()  # Transcribe each chunk immediately after saving
+                audio_data = []  # Clear the buffer
+
+        # Save and transcribe any remaining audio data
+        if audio_data:
+            self.save_audio_chunk(audio_data)
+            self.transcribe()
 
     def save_audio_chunk(self, audio_data):
         with open(self.audiofilename, "wb") as file:
             for audio in audio_data:
                 file.write(audio.get_wav_data())
-        print(f"Audio has been saved to '{self.audiofilename}'.")
+        logging.info(f"Audio has been saved to '{self.audiofilename}'.")
 
     def transcribe(self):
         try:
-            with sr.AudioFile(self.audiofilename) as source:
-                audio = self.recognizer.record(source)
-            self.transcription_result = self.recognizer.recognize_google(audio)
-        except sr.UnknownValueError:
-            print("Speech Recognition could not understand the audio.")
-        except sr.RequestError as e:
-            print(f"Could not request results from the Speech Recognition service; {e}")
+            # Use Whisper to transcribe the audio file
+            logging.info(f"Transcribing audio using Whisper: {self.audiofilename}")
+            result = self.whisper_model.transcribe(self.audiofilename)
+            self.transcription_result = result["text"]
+
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logging.error(f"An error occurred with Whisper transcription: {e}")
 
         if self.transcription_result:
-            with open(self.transcription_filename, "w") as f:
-                f.write(self.transcription_result)
-            print(f"Transcript saved to {self.transcription_filename}")
+            # Split the text into lines based on a fixed number of words
+            max_words_per_line = 10  # Maximum words per line
+            words = self.transcription_result.split()
+            lines = [' '.join(words[i:i + max_words_per_line]) 
+                     for i in range(0, len(words), max_words_per_line)]
+
+            with open(self.transcription_filename, "a") as f:  # Append to the file instead of overwriting
+                for line in lines:
+                    f.write(line + "\n")  # Write each line with a newline character
+
+            logging.info(f"Transcript saved to {self.transcription_filename}")
             self.summarize_text(self.transcription_filename)
         else:
-            print("No transcription result to save.")
+            logging.warning("No transcription result to save.")
+
 
     def _transcribe_audio(self):
         while self.transcribing:
             if not self.paused:
                 self.listen()
-                self.transcribe()
 
     def pause_transcription(self):
         with self.lock:
             if self.transcribing:
                 self.paused = True
-                print("Transcription paused.")
+                logging.info("Transcription paused.")
 
     def resume_transcription(self):
         with self.lock:
             if self.transcribing and self.paused:
                 self.paused = False
-                print("Transcription resumed.")
+                logging.info("Transcription resumed.")
 
     def stop_transcription(self):
         with self.lock:
             if self.transcribing:
                 self.transcribing = False
-                print("Transcription stopped.")
+                logging.info("Transcription stopped.")
                 if self.transcription_thread and self.transcription_thread.is_alive():
                     self.transcription_thread.join()
 
@@ -136,13 +166,22 @@ class Phineas_AI:
         with open(input_file, "r") as f:
             text = f.read()
 
-        print("Summarizing text...")
+        logging.info("Summarizing text...")
         summary = self.summarizer(text, max_length=1500, min_length=10, do_sample=False)[0]['summary_text']
-        with open(output_file, "w") as f:
-            f.write(summary)
 
-        print(f"Summary saved to {output_file}")
+        # Split the summary into lines based on a fixed number of words
+        max_words_per_line = 10  # Maximum words per line
+        words = summary.split()
+        summary_lines = [' '.join(words[i:i + max_words_per_line]) 
+                         for i in range(0, len(words), max_words_per_line)]
+
+        with open(output_file, "w") as f:
+            for line in summary_lines:
+                f.write(line + "\n")  # Write each line with a newline character
+
+        logging.info(f"Summary saved to {output_file}")
         return output_file
+
 
     def openrepo(self):
         path = os.path.join("Phineas_AI", "Records")
@@ -160,11 +199,15 @@ if __name__ == "__main__":
 
     # Pause transcription
     helper.pause_transcription()
+
     time.sleep(2)  # Simulate pause duration
 
     # Resume transcription
     helper.resume_transcription()
     time.sleep(10)  # Simulate additional transcription time
+
+    # Stop transcription
+    helper.stop_transcription()
 
     # Stop transcription
     helper.stop_transcription()
