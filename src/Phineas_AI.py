@@ -93,7 +93,7 @@ class Phineas_AI:
 
             if len(audio_data) >= 5:  # Buffer 5 chunks before saving and transcribing
                 self.save_audio_chunk(audio_data)
-                self.transcribe()  # Transcribe each chunk immediately after saving
+                #self.transcribe()  # Transcribe each chunk immediately after saving
                 audio_data = []  # Clear the buffer
 
         # Save and transcribe any remaining audio data
@@ -102,7 +102,7 @@ class Phineas_AI:
             self.transcribe()
 
     def save_audio_chunk(self, audio_data):
-        with open(self.audiofilename, "wb") as file:
+        with open(self.audiofilename, "ab") as file:
             for audio in audio_data:
                 file.write(audio.get_wav_data())
         logging.info(f"Audio has been saved to '{self.audiofilename}'.")
@@ -167,7 +167,7 @@ class Phineas_AI:
             text = f.read()
 
         logging.info("Summarizing text...")
-        summary = self.summarizer(text, max_length=1500, min_length=10, do_sample=False)[0]['summary_text']
+        summary = self.summarizer(text, max_length=1500, min_length=1, do_sample=False)[0]['summary_text']
 
         # Split the summary into lines based on a fixed number of words
         max_words_per_line = 10  # Maximum words per line
