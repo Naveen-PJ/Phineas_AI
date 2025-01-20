@@ -76,7 +76,8 @@ class Phineas_AI:
         audio_data = []
         while self.transcribing:
             timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
-            self.audiofilename = f"{self.folderaudio}/{self.subname}{timestamp}.wav"
+            # Use a fixed filename for the entire recording
+            self.audiofilename = f"{self.folderaudio}/{self.subname}_{timestamp}.wav"
 
             with self.mic as source:
                 self.recognizer.adjust_for_ambient_noise(source)
@@ -91,12 +92,11 @@ class Phineas_AI:
                     except Exception as e:
                         logging.error(f"An error occurred while listening: {e}")
 
-            if len(audio_data) >= 5:  # Buffer 5 chunks before saving and transcribing
+            if len(audio_data) >= 5:  # Buffer 5 chunks before saving
                 self.save_audio_chunk(audio_data)
-                #self.transcribe()  # Transcribe each chunk immediately after saving
                 audio_data = []  # Clear the buffer
 
-        # Save and transcribe any remaining audio data
+    # Save and transcribe any remaining audio data
         if audio_data:
             self.save_audio_chunk(audio_data)
             self.transcribe()
