@@ -100,23 +100,27 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
 ## Folder Structure
 ```
 Phineas_AI/
-|-- Records/
-|   |-- subject1/
-|   |   |-- Transcript_Folder
-|   |   |-- Summary_Folder
-|   |-- subject2/
-|   |   |-- Transcript_Folder
-|   |   |-- Summary_Folder
-|   ...
-|-- Logs/  # .log files are created only if any error occurs during the execution of the program
-|   |-- log1.log
-|   |-- log2.log
+|--Phineas_AI/
+|   |-- Records/
+|   |   |-- subject1/
+|   |   |   |-- Audio_Folder  
+|   |   |   |-- Transcript_Folder
+|   |   |   |-- Summary_Folder
+|   |   |-- subject2/
+|   |   |   |-- Audio_Folder
+|   |   |   |-- Transcript_Folder
+|   |   |   |-- Summary_Folder
+|   |   ...
+|   |--Data/
+|   |   |-- Logs/  # .log files are created only if any error occurs during the execution of the program
+|   |   |    |-- log1.log
+|   |   |    |-- log2.log
 |-- src/
 |   |-- __pycache__/
 |   |-- __init__.py
 |   |-- Phineas_AI.py
 |   |-- PhineasBot.py
-|   |-- TextSimilarity.py  # New script for text similarity search
+|   |-- vectorstoreai.py  # New script for text similarity search
 |   |-- .env  # .env file with Groq API key
 |-- main.py
 |-- .gitignore
