@@ -4,7 +4,7 @@ import threading
 import os
 import whisper
 import logging
-from src.PhineasBot import SimpleChatBot
+from src.PhineasBot import ChatBotWithVectors
 
 class Phineas_AI:
 
@@ -50,9 +50,9 @@ class Phineas_AI:
         self.foldertrans = os.path.join("Phineas_AI", "Records", self.subname, "Transcript_Folder")
         self.foldersum = os.path.join("Phineas_AI", "Records", self.subname, "Summary_Folder")
         self.folderaudio = os.path.join("Phineas_AI", "Records", self.subname, "Audio_Folder")
-        self.vector_store = os.path.join("Phineas_AI", "Data", "Vector_Store")
+        #self.vector_store = os.path.join("Phineas_AI", "Data", "Database")
 
-        for folder in [self.foldertrans, self.foldersum, self.folderaudio,self.vector_store]:
+        for folder in [self.foldertrans, self.foldersum, self.folderaudio]:
             if not os.path.exists(folder):
                 os.makedirs(folder)
 
@@ -132,7 +132,7 @@ class Phineas_AI:
 
             logging.info(f"Transcript saved to {self.transcription_filename}")
             output_file = f"{self.foldersum}/{self.subname}_Summary_{self.timestamp}.txt"
-            self.bot=SimpleChatBot()
+            self.bot=ChatBotWithVectors()
             self.bot.summarize(self.transcription_filename,output_file)
         else:
             logging.warning("No transcription result to save.")

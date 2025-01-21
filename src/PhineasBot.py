@@ -1,32 +1,32 @@
 import logging
+import os
 from langchain.chains import ConversationChain
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferWindowMemory
 from dotenv import load_dotenv
-import os
- # Ensure the Logs directory exists
-log_dir = os.path.join("Phineas_AI","Data","Logs")
-if not os.path.exists(log_dir):
-     os.makedirs(log_dir)
+from src.vectorstoreai import EmbeddingManager
 
- # Set up logging to save to a file in the Logs directory
+# Ensure the Logs directory exists
+log_dir = os.path.join("Phineas_AI", "Data", "Logs")
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+# Set up logging to save to a file in the Logs directory
 logging.basicConfig(
-filename=os.path.join(log_dir, 'phineas_ai.log'),  # Specify the log file path
-level=logging.INFO,
-format='%(asctime)s - %(levelname)s - %(message)s'
+    filename=os.path.join(log_dir, 'phineas_ai_with_vectors.log'),
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-
-class SimpleChatBot:
+class ChatBotWithVectors:
     def __init__(self):
         # Load environment variables from .env file
         load_dotenv()
 
-        # Get the API key from the environment variable
+        # Initialize required components
         self.groq_api_key = os.getenv("GROQ_API_KEY")
         self.model_name = "llama3-70b-8192"
         self.chat_history = []
-        self.subname = None
 
         self.memory = ConversationBufferWindowMemory(k=10)  # Store the last 10 interactions
 
@@ -36,7 +36,10 @@ class SimpleChatBot:
             model_name=self.model_name
         )
 
-        logging.info("SimpleChatBot initialized.")
+        # Initialize embedding manager
+        self.embedding_manager = EmbeddingManager()
+
+        logging.info("ChatBotWithVectors initialized.")
 
     def ask(self, query):
         try:
@@ -46,7 +49,7 @@ class SimpleChatBot:
             for message in self.chat_history:
                 self.memory.save_context({'input': message['human']}, {'output': message['AI']})
 
-            # Combine the query with chat history
+            # Instead of retrieving context from embeddings, we proceed directly with the query
             full_query = f"User Query:\n{query}"
 
             # Get response from Groq
@@ -57,11 +60,21 @@ class SimpleChatBot:
             message = {'human': query, 'AI': response['response']}
             self.chat_history.append(message)
 
-            logging.info(f"Response generated: {response['response']}")
+            logging.info(f"Response generated: {response['response']}".strip())
             return response['response']
         except Exception as e:
             logging.error(f"Error during query handling: {e}")
             return f"An error occurred: {e}"
+
+
+    def add_to_vector_store(self, texts):
+        try:
+            logging.info("Adding texts to vector store.")
+            self.embedding_manager.create_embeddings(texts)
+            logging.info("Texts added to vector store successfully.")
+        except Exception as e:
+            logging.error(f"Error adding texts to vector store: {e}")
+            return f"An error occurred while adding to vector store: {e}"
 
     def summarize(self, input_file, output_file):
         try:
@@ -71,8 +84,8 @@ class SimpleChatBot:
                 text = f.read()
 
             # Create a summarization query
-            summary_prompt = f"Summarize the following text \n{text}"
-            key_points_prompt = f"Extract key points of the following text \n{text}"
+            summary_prompt = f"Summarize the following text:\n{text}"
+            key_points_prompt = f"Extract key points of the following text:\n{text}"
 
             # Use Groq API to get the summary
             conversation = ConversationChain(llm=self.groq_chat)
@@ -94,37 +107,53 @@ class SimpleChatBot:
                 for line in key_points_text.split('\n'):
                     f.write(line + "\n")
 
+            # Add the summary to the vector store
+            self.add_to_vector_store([summary_text])
+
             logging.info(f"Summarization completed. Output saved to: {output_file}")
             return output_file
         except Exception as e:
             logging.error(f"Error during summarization: {e}")
             return f"An error occurred during summarization: {e}"
 
-
 # Example usage
 if __name__ == "__main__":
-    chatbot = SimpleChatBot()
+    chatbot = ChatBotWithVectors()
+
     print("Chatbot is ready! Type 'exit' to quit.")
 
     while True:
         print("\nOptions:")
         print("1: Ask a question")
-        print("2: Summarize a text file")
-        print("3: Exit")
-        
+        print("2: Add texts to vector store")
+        print("3: Summarize a text file")
+        print("4: Exit")
+
         choice = input("Choose an option: ")
         if choice == '1':
             user_query = input("Your Query: ")
             response = chatbot.ask(user_query)
             print(f"Chatbot: {response}")
         elif choice == '2':
-            file_path = "sample.txt"
-            try:
-                summary_file = chatbot.summarize(file_path, file_path.replace(".txt", "_summary.txt"))
-                print(f"Summary saved at: {summary_file}")
-            except FileNotFoundError:
-                print("File not found. Please try again.")
+            print("Enter texts to add to the vector store (type 'END' on a new line to finish):")
+            input_texts = []
+            while True:
+                line = input()
+                if line.strip().upper() == 'END':
+                    break
+                input_texts.append(line)
+
+            result = chatbot.add_to_vector_store(input_texts)
+            if result:
+                print(result)
+            else:
+                print("Texts added successfully.")
         elif choice == '3':
+            file_path = input("Enter the path of the file to summarize: ")
+            output_path = file_path.replace(".txt", "_summary.txt")
+            result = chatbot.summarize(file_path, output_path)
+            print(f"Summary saved to: {result}" if not result.startswith("An error occurred") else result)
+        elif choice == '4':
             print("Goodbye!")
             logging.info("Chatbot session ended.")
             break

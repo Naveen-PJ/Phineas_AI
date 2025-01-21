@@ -12,14 +12,14 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
 from kivy.core.window import Window
 from src.Phineas_AI import Phineas_AI
-from src.PhineasBot import SimpleChatBot
+from src.PhineasBot import ChatBotWithVectors
 
 
 # Set the background color to a light grey
 Window.clearcolor = (0.95, 0.95, 0.95, 1)
 
 ai = Phineas_AI()
-bot=SimpleChatBot()
+bot=ChatBotWithVectors()
 
 class SubjectSelectPage(BoxLayout):
     def __init__(self, switch_to_subject_page, **kwargs):

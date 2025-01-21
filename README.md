@@ -13,6 +13,8 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
    - A feature to clarify students' doubts during the lecture using the `SimpleChatBot` class.
 4. **User Interface**:
    - A simple Kivy-based interface for an easy user experience.
+5. **Text Similarity Search**:
+   - Converts input texts into embeddings using spaCy, stores them in a FAISS index, and allows efficient querying to find the most similar documents based on a user's query.
 
 ---
 
@@ -25,6 +27,8 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
 - **Speech Recognition**: Used to record audio.
 - **Whisper**: Used for transcribing audio using the Whisper model.
 - **Dotenv**: Used for loading environment variables from a `.env` file.
+- **spaCy**: Used for generating text embeddings.
+- **FAISS**: A library for efficient similarity search and clustering of dense vectors.
 
 ---
 
@@ -48,6 +52,8 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
    - `SpeechRecognition`
    - `whisper`
    - `dotenv`
+   - `spaCy`
+   - `faiss-cpu` (for the FAISS similarity search feature)
    - Other dependencies listed in `requirements.txt`.
    - **ffmpeg** (required for OpenAI-Whisper to handle audio file preprocessing)
 
@@ -76,6 +82,14 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
 
 3. After the lecture, the summary will be presented. The software also has a feature to clarify any doubts raised during the lecture using the `SimpleChatBot` class.
 
+### Text Similarity Search
+1. The `TextSimilarity.py` script provides the functionality for text similarity search. It uses spaCy to generate embeddings and FAISS to index and query the embeddings efficiently.
+   
+2. To use the text similarity search feature:
+   - You can input your text, and the system will return the most similar documents based on the stored embeddings in the FAISS index.
+   
+3. The embeddings and FAISS index are stored in the `src/text_similarity/` folder.
+
 ---
 
 ## Folder Structure
@@ -97,6 +111,7 @@ Phineas_AI/
 |   |-- __init__.py
 |   |-- Phineas_AI.py
 |   |-- PhineasBot.py
+|   |-- TextSimilarity.py  # New script for text similarity search
 |   |-- .env  # .env file with Groq API key
 |-- main.py
 |-- .gitignore
@@ -137,4 +152,4 @@ Contributions are welcome! Please follow these steps:
    ```
 5. Open a pull request.
 
----
+--- 
