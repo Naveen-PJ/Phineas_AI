@@ -57,7 +57,12 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
    - Other dependencies listed in `requirements.txt`.
    - **ffmpeg** (required for OpenAI-Whisper to handle audio file preprocessing)
 
-4. Create a `.env` file inside the `src` folder with your Groq API key:
+4. Download the spaCy language model:
+   ```bash
+   python -m spacy download en_core_web_sm
+   ```
+
+5. Create a `.env` file inside the `src` folder with your Groq API key:
    ```
    GROQ_API_KEY=your_groq_api_key
    ```
