@@ -1,15 +1,14 @@
 import speech_recognition as sr
-from transformers import pipeline
 from datetime import datetime
 import threading
 import os
 import whisper
 import logging
+from src.PhineasBot import SimpleChatBot
 
 class Phineas_AI:
 
     def __init__(self):
-        self.summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
         self.whisper_model = whisper.load_model("base")
         self.recognizer = sr.Recognizer()
         self.mic = sr.Microphone()
@@ -24,12 +23,14 @@ class Phineas_AI:
         self.foldersum = None
         self.folderaudio = None
         self.audiofilename = None
+        self.vector_store = None
 
         self.lock = threading.Lock()
         self.initialize_folders()
+        
 
         # Ensure the Logs directory exists
-        log_dir = os.path.join("Phineas_AI", "Logs")
+        log_dir = os.path.join("Phineas_AI","Data","Logs")
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
@@ -49,8 +50,9 @@ class Phineas_AI:
         self.foldertrans = os.path.join("Phineas_AI", "Records", self.subname, "Transcript_Folder")
         self.foldersum = os.path.join("Phineas_AI", "Records", self.subname, "Summary_Folder")
         self.folderaudio = os.path.join("Phineas_AI", "Records", self.subname, "Audio_Folder")
+        self.vector_store = os.path.join("Phineas_AI", "Data", "Vector_Store")
 
-        for folder in [self.foldertrans, self.foldersum, self.folderaudio]:
+        for folder in [self.foldertrans, self.foldersum, self.folderaudio,self.vector_store]:
             if not os.path.exists(folder):
                 os.makedirs(folder)
 
@@ -75,9 +77,9 @@ class Phineas_AI:
     def listen(self):
         audio_data = []
         while self.transcribing:
-            timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
+            self.timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
             # Use a fixed filename for the entire recording
-            self.audiofilename = f"{self.folderaudio}/{self.subname}_{timestamp}.wav"
+            self.audiofilename = f"{self.folderaudio}/{self.subname}_{self.timestamp}.wav"
 
             with self.mic as source:
                 self.recognizer.adjust_for_ambient_noise(source)
@@ -100,6 +102,7 @@ class Phineas_AI:
         if audio_data:
             self.save_audio_chunk(audio_data)
             self.transcribe()
+        self.transcribe()
 
     def save_audio_chunk(self, audio_data):
         with open(self.audiofilename, "ab") as file:
@@ -129,7 +132,9 @@ class Phineas_AI:
                     f.write(line + "\n")  # Write each line with a newline character
 
             logging.info(f"Transcript saved to {self.transcription_filename}")
-            self.summarize_text(self.transcription_filename)
+            output_file = f"{self.foldersum}/{self.subname}_Summary_{self.timestamp}.txt"
+            self.bot=SimpleChatBot()
+            self.bot.summarize(self.transcription_filename,output_file)
         else:
             logging.warning("No transcription result to save.")
 
@@ -158,31 +163,7 @@ class Phineas_AI:
                 logging.info("Transcription stopped.")
                 if self.transcription_thread and self.transcription_thread.is_alive():
                     self.transcription_thread.join()
-
-    def summarize_text(self, input_file):
-        timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
-        output_file = f"{self.foldersum}/{self.subname}_Summary_{timestamp}.txt"
-
-        with open(input_file, "r") as f:
-            text = f.read()
-
-        logging.info("Summarizing text...")
-        summary = self.summarizer(text, max_length=1500, min_length=1, do_sample=False)[0]['summary_text']
-
-        # Split the summary into lines based on a fixed number of words
-        max_words_per_line = 10  # Maximum words per line
-        words = summary.split()
-        summary_lines = [' '.join(words[i:i + max_words_per_line]) 
-                         for i in range(0, len(words), max_words_per_line)]
-
-        with open(output_file, "w") as f:
-            for line in summary_lines:
-                f.write(line + "\n")  # Write each line with a newline character
-
-        logging.info(f"Summary saved to {output_file}")
-        return output_file
-
-
+        
     def openrepo(self):
         path = os.path.join("Phineas_AI", "Records")
         os.startfile(path)

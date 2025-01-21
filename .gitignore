@@ -33,3 +33,6 @@ config.py
 
 # Ignore all text files in the records directory
 Records
+
+#ignore Phineas_AI folder
+Phineas_AI/
