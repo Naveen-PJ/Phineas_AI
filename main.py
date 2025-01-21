@@ -12,11 +12,14 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
 from kivy.core.window import Window
 from src.Phineas_AI import Phineas_AI
+from src.PhineasBot import SimpleChatBot
+
 
 # Set the background color to a light grey
 Window.clearcolor = (0.95, 0.95, 0.95, 1)
 
 ai = Phineas_AI()
+bot=SimpleChatBot()
 
 class SubjectSelectPage(BoxLayout):
     def __init__(self, switch_to_subject_page, **kwargs):
@@ -195,14 +198,14 @@ class PhineasPopup(Popup):
         if user_message:
             self.add_message("You", user_message)
             self.text_input.text = ""
-
+            output_message = bot.ask(user_message)
             # Simulate a response (replace this with actual AI/logic integration)
-            self.add_message("Phineas AI", f"Echo: {user_message}")
+            self.add_message("Phineas AI",output_message)
 
     def add_message(self, sender, message):
         # Add a message to the chat
         message_label = Label(
-            text=f"[b]{sender}:[/b] {message}",
+            text=f"[b]{sender} : [/b] {message}",
             size_hint_y=None,
             markup=True,
             halign="left",
