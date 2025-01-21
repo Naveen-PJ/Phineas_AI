@@ -1,8 +1,21 @@
+import logging
 from langchain.chains import ConversationChain
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferWindowMemory
 from dotenv import load_dotenv
 import os
+ # Ensure the Logs directory exists
+log_dir = os.path.join("Phineas_AI","Data","Logs")
+if not os.path.exists(log_dir):
+     os.makedirs(log_dir)
+
+ # Set up logging to save to a file in the Logs directory
+logging.basicConfig(
+filename=os.path.join(log_dir, 'phineas_ai.log'),  # Specify the log file path
+level=logging.INFO,
+format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
 
 class SimpleChatBot:
     def __init__(self):
@@ -23,8 +36,12 @@ class SimpleChatBot:
             model_name=self.model_name
         )
 
+        logging.info("SimpleChatBot initialized.")
+
     def ask(self, query):
         try:
+            logging.info(f"Received query: {query}")
+
             # Save chat history to memory
             for message in self.chat_history:
                 self.memory.save_context({'input': message['human']}, {'output': message['AI']})
@@ -39,34 +56,31 @@ class SimpleChatBot:
             # Update chat history
             message = {'human': query, 'AI': response['response']}
             self.chat_history.append(message)
+
+            logging.info(f"Response generated: {response['response']}")
             return response['response']
         except Exception as e:
+            logging.error(f"Error during query handling: {e}")
             return f"An error occurred: {e}"
 
     def summarize(self, input_file, output_file):
         try:
+            logging.info(f"Starting summarization for file: {input_file}")
+
             with open(input_file, "r") as f:
                 text = f.read()
 
             # Create a summarization query
             summary_prompt = f"Summarize the following text \n{text}"
-            key_points_prompt=f"Extract key points of the following text \n {text}"
-            
+            key_points_prompt = f"Extract key points of the following text \n{text}"
+
             # Use Groq API to get the summary
             conversation = ConversationChain(llm=self.groq_chat)
-            response = conversation.run(summary_prompt)  # Ensure this returns the expected format
-            response_key_points = conversation.run(key_points_prompt)  # Ensure this returns the expected format
+            response = conversation.run(summary_prompt)
+            response_key_points = conversation.run(key_points_prompt)
 
-            # If the response is a dictionary or has keys like 'response', update accordingly
-            if isinstance(response, dict):
-                summary_text = response.get('response', '')  # Use .get() to safely retrieve the summary
-            else:
-                summary_text = response
-
-            if isinstance(response_key_points,dict):
-                key_points_text = response_key_points.get('response', '')  # Use .get() to
-            else:
-                key_points_text = response_key_points
+            summary_text = response if isinstance(response, str) else response.get('response', '')
+            key_points_text = response_key_points if isinstance(response_key_points, str) else response_key_points.get('response', '')
 
             max_words_per_line = 20  # Maximum words per line
             words = summary_text.split()
@@ -79,16 +93,16 @@ class SimpleChatBot:
                 f.write("\n\nKEY POINTS\n")
                 for line in key_points_text.split('\n'):
                     f.write(line + "\n")
+
+            logging.info(f"Summarization completed. Output saved to: {output_file}")
             return output_file
         except Exception as e:
+            logging.error(f"Error during summarization: {e}")
             return f"An error occurred during summarization: {e}"
 
 
 # Example usage
 if __name__ == "__main__":
-    # Load environment variables from .env file
-    load_dotenv()
-
     chatbot = SimpleChatBot()
     print("Chatbot is ready! Type 'exit' to quit.")
 
@@ -112,6 +126,7 @@ if __name__ == "__main__":
                 print("File not found. Please try again.")
         elif choice == '3':
             print("Goodbye!")
+            logging.info("Chatbot session ended.")
             break
         else:
             print("Invalid choice. Please try again.")
