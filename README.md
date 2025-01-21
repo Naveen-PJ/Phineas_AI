@@ -30,7 +30,7 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Naveen-PJ/Phineas_AI.git
+   git clone URL
    cd Phineas_AI
    ```
 

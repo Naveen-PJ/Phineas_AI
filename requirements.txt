@@ -1,5 +1,7 @@
-transformers   # For text summarization
 kivy            # For building the GUI
 SpeechRecognition # For transcribing the audio
 PyAudio
 whisper           # For Whisper model
+langchain_groq
+langchain
+dotenv
