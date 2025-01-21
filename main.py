@@ -161,26 +161,61 @@ class PhineasPopup(Popup):
         self.title = 'Phineas AI'
         self.size_hint = (0.8, 0.8)
 
-        layout = BoxLayout(orientation='vertical', padding=20, spacing=20)
-        transcribing_label = Label(text='Transcribing...', size_hint_y=None, height=40, halign='left', font_size=18, color=(0, 0, 0, 1))
-        response_label = Label(text='Response...', size_hint_y=None, height=40, halign='right', font_size=18, color=(0, 0, 0, 1))
-        layout.add_widget(transcribing_label)
-        layout.add_widget(response_label)
+        # Main layout for the popup
+        layout = BoxLayout(orientation='vertical', padding=5, spacing=10)
 
-        input_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=60, padding=[0, 20])
-        text_input = TextInput(hint_text='Type here...', size_hint_x=0.9, font_size=18)
-        mic_button = Button(text='🎤', size_hint_x=0.1, background_color=(0.2, 0.6, 0.8, 1), color=(1, 1, 1, 1), font_size=18)
-        input_layout.add_widget(text_input)
-        input_layout.add_widget(mic_button)
+        # Scrollable chat window
+        self.chat_layout = GridLayout(cols=1, size_hint_y=None, spacing=5)
+        self.chat_layout.bind(minimum_height=self.chat_layout.setter('height'))
+
+        scroll_view = ScrollView(size_hint=(1, 1))
+        scroll_view.add_widget(self.chat_layout)
+        layout.add_widget(scroll_view)
+
+        # User input area
+        input_layout = BoxLayout(size_hint_y=None, height=50, spacing=10)
+        self.text_input = TextInput(hint_text='Type here...', multiline=False, size_hint_x=0.8, font_size=18)
+        enter_button = Button(text='Enter', size_hint_x=0.2, background_color=(0.2, 0.6, 0.8, 1), color=(1, 1, 1, 1), font_size=18)
+        enter_button.bind(on_release=self.handle_user_input)
+
+        input_layout.add_widget(self.text_input)
+        input_layout.add_widget(enter_button)
 
         layout.add_widget(input_layout)
 
-        # Close Button
-        close_btn = Button(text='Close', size_hint=(None, None), size=(100, 50), pos_hint={'right': 1}, background_color=(0.8, 0.2, 0.2, 1), color=(1, 1, 1, 1), font_size=18)
+        # Close button
+        close_btn = Button(text='Close', size_hint=(None, None), size=(100, 50), pos_hint={'center_x': 0.5}, background_color=(0.8, 0.2, 0.2, 1), color=(1, 1, 1, 1), font_size=18)
         close_btn.bind(on_press=self.dismiss)
         layout.add_widget(close_btn)
 
         self.content = layout
+
+    def handle_user_input(self, instance):
+        user_message = self.text_input.text.strip()
+        if user_message:
+            self.add_message("You", user_message)
+            self.text_input.text = ""
+
+            # Simulate a response (replace this with actual AI/logic integration)
+            self.add_message("Phineas AI", f"Echo: {user_message}")
+
+    def add_message(self, sender, message):
+        # Add a message to the chat
+        message_label = Label(
+            text=f"[b]{sender}:[/b] {message}",
+            size_hint_y=None,
+            markup=True,
+            halign="left",
+            valign="middle"
+        )
+        message_label.bind(width=lambda s, w: s.setter('text_size')(s, (w, None)))
+        message_label.bind(texture_size=lambda s, t: s.setter('size')(s, (s.width, t[1])))
+
+        self.chat_layout.add_widget(message_label)
+        self.chat_layout.height += message_label.height
+
+        # Scroll to the bottom
+        self.chat_layout.parent.scroll_y = 0
 
 class PhineasApp(App):
     def build(self):
