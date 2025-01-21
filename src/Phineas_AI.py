@@ -98,10 +98,9 @@ class Phineas_AI:
                 self.save_audio_chunk(audio_data)
                 audio_data = []  # Clear the buffer
 
-    # Save and transcribe any remaining audio data
+        # Save and transcribe any remaining audio data
         if audio_data:
             self.save_audio_chunk(audio_data)
-            self.transcribe()
         self.transcribe()
 
     def save_audio_chunk(self, audio_data):
