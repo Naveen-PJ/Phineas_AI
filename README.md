@@ -1,16 +1,16 @@
 # Phineas_AI
 
 ## Overview
-Phineas AI is a Python-based software designed to record entire lectures or classes, transcribe them into text, and generate concise summaries. The summaries include key points such as homework details, additional points discussed by the professor, and answers to student doubts. The software uses the `facebook/bart-large-cnn` model for summarization and has a user-friendly interface built with Kivy.
+Phineas AI is a Python-based software designed to record entire lectures or classes, transcribe them into text, and generate concise summaries. The summaries include key points such as homework details, additional points discussed by the professor, and answers to student doubts. The software uses the `llama3-70b` model for summarization and has a user-friendly interface built with Kivy.
 
 ### Key Features
 
 1. **Transcription**:
    - Converts the recorded audio into text using speech recognition.
 2. **Summarization**:
-   - Generates summaries of the lecture using the `facebook/bart-large-cnn` model, including key points, homework details, and professor's extra discussions.
+   - Generates summaries of the lecture using the `llama3-70b` model, including key points, homework details, and professor's extra discussions.
 3. **Doubt Clarification**:
-   - A future feature to clarify students' doubts during the lecture.
+   - A feature to clarify students' doubts during the lecture using the `SimpleChatBot` class.
 4. **User Interface**:
    - A simple Kivy-based interface for an easy user experience.
 
@@ -19,10 +19,12 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
 ## Technologies Used
 
 - **Python**: The primary programming language used to build the software.
-- **Transformers**: The `transformers` library by Hugging Face is used for text summarization with the `facebook/bart-large-cnn` model.
+- **Langchain**: Used for managing conversation chains and memory.
+- **Langchain_groq**: Used for interacting with the Groq API for summarization.
 - **Kivy**: A Python framework for building the graphical user interface.
 - **Speech Recognition**: Used to record audio.
 - **Whisper**: Used for transcribing audio using the Whisper model.
+- **Dotenv**: Used for loading environment variables from a `.env` file.
 
 ---
 
@@ -30,7 +32,7 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
 
 1. Clone the repository:
    ```bash
-   git clone URL
+   git clone https://github.com/Naveen-PJ/Phineas_AI.git
    cd Phineas_AI
    ```
 
@@ -40,16 +42,18 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
    ```
 
 3. Ensure you have the following libraries installed:
-   - `transformers` (for the `facebook/bart-large-cnn` model)
+   - `langchain`
+   - `langchain_groq`
    - `Kivy`
    - `SpeechRecognition`
    - `whisper`
+   - `dotenv`
    - Other dependencies listed in `requirements.txt`.
    - **ffmpeg** (required for OpenAI-Whisper to handle audio file preprocessing)
 
-4. Download the necessary Hugging Face model for summarization (this will be handled automatically by the `transformers` library when needed):
-   ```bash
-   pip install transformers
+4. Create a `.env` file inside the `src` folder with your Groq API key:
+   ```
+   GROQ_API_KEY=your_groq_api_key
    ```
 
 ### Prerequisites
@@ -68,9 +72,9 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
    python main.py
    ```
 
-2. The program will begin recording the lecture. Once the lecture is complete, it will transcribe the audio and generate a summary containing the key points discussed during the lecture, using the `facebook/bart-large-cnn` model.
+2. The program will begin recording the lecture. Once the lecture is complete, it will transcribe the audio and generate a summary containing the key points discussed during the lecture, using the `llama3-70b` model.
 
-3. After the lecture, the summary will be presented. The software will also have a feature to clarify any doubts raised during the lecture (future feature).
+3. After the lecture, the summary will be presented. The software also has a feature to clarify any doubts raised during the lecture using the `SimpleChatBot` class.
 
 ---
 
@@ -92,6 +96,8 @@ Phineas_AI/
 |   |-- __pycache__/
 |   |-- __init__.py
 |   |-- Phineas_AI.py
+|   |-- PhineasBot.py
+|   |-- .env  # .env file with Groq API key
 |-- main.py
 |-- .gitignore
 |-- requirements.txt
@@ -103,14 +109,12 @@ Phineas_AI/
 ## Future Enhancements
 1. **Live Transcription**:
    - Real-time transcription of lectures to be implemented.
-2. **Enhanced UI**:
-   - A more intuitive graphical interface with KivyMD components.
-3. **Database Integration**:
+2. **Database Integration**:
    - Store transcripts, summaries, and doubts for future reference.
-4. **Customization**:
+3. **Customization**:
    - Allow users to choose summarization styles or formats.
-5. **Doubt Clarification**:
-   - Providing responses to students' doubts during the lecture using NLP (future feature).
+4. **Doubt Clarification**:
+   - Providing responses to students' doubts during the lecture using NLP.
 
 ---
 
