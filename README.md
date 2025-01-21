@@ -109,11 +109,13 @@ Phineas_AI/
 ## Future Enhancements
 1. **Live Transcription**:
    - Real-time transcription of lectures to be implemented.
-2. **Database Integration**:
+2. **Enhanced UI**:
+   - A more intuitive graphical interface with KivyMD components.
+3. **Database Integration**:
    - Store transcripts, summaries, and doubts for future reference.
-3. **Customization**:
+4. **Customization**:
    - Allow users to choose summarization styles or formats.
-4. **Doubt Clarification**:
+5. **Doubt Clarification**:
    - Providing responses to students' doubts during the lecture using NLP.
 
 ---
