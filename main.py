@@ -115,7 +115,7 @@ class SubjectSelectedPage(BoxLayout):
         startbutton.bind(on_press=lambda instance: self.animate_button(instance, lambda *args: ai.start_transcription(subject_name)))
         transcription_layout.add_widget(startbutton)
         puasebutton = Button(text='Pause', background_color=(0.2, 0.6, 0.8, 1), color=(1, 1, 1, 1), font_size=18)
-        puasebutton.bind(on_press=lambda instance: self.animate_button(instance, lambda *args: ai.pause_and_resume()))
+        puasebutton.bind(on_press=lambda instance: self.animate_button(instance, lambda *args: ai.pause_transcription()))
         transcription_layout.add_widget(puasebutton)
         stopbutton = Button(text='Stop Transcription', background_color=(0.2, 0.6, 0.8, 1), color=(1, 1, 1, 1), font_size=18)
         stopbutton.bind(on_press=lambda instance: self.animate_button(instance, lambda *args: ai.stop_transcription()))

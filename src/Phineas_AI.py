@@ -1,17 +1,16 @@
-import speech_recognition as sr
 from datetime import datetime
 import threading
 import os
 import whisper
 import logging
+import wave
+import pyaudio
 from src.PhineasBot import ChatBotWithVectors
 
 class Phineas_AI:
 
     def __init__(self):
         self.whisper_model = whisper.load_model("base")
-        self.recognizer = sr.Recognizer()
-        self.mic = sr.Microphone()
         self.transcribing = False
         self.paused = False
         self.transcription_thread = None
@@ -24,6 +23,14 @@ class Phineas_AI:
         self.folderaudio = None
         self.audiofilename = None
         self.vector_store = None
+
+        self.CHUNK = 4096  # Buffer size
+        self.FORMAT = pyaudio.paInt16  # Audio format
+        self.CHANNELS = 1
+        self.RATE = 44100
+        self.frames = []
+        self.audio = pyaudio.PyAudio()
+        stream = None
 
         self.lock = threading.Lock()
         self.initialize_folders()
@@ -75,38 +82,50 @@ class Phineas_AI:
         self.transcription_thread.start()
 
     def listen(self):
-        audio_data = []
-        while self.transcribing:
+        if not self.paused:
+            logging.info("Listening...")
+            try:
+                
+                stream = self.audio.open(
+                    format=self.FORMAT,
+                    channels=self.CHANNELS,
+                    rate=self.RATE,
+                    input=True,
+                    frames_per_buffer=self.CHUNK
+                )
+                while self.transcribing:
+                    try:
+                        data = stream.read(self.CHUNK, exception_on_overflow=False)
+                        self.frames.append(data)
+                    except OSError as e:
+                        print(f"Warning: {e}")
+                        time.sleep(0.1)
+                        continue
+            except Exception as e:
+                print(f"Error in recording: {e}")
+            finally:
+                if stream:
+                    try:
+                        stream.stop_stream()
+                        stream.close()
+                    except:
+                        pass
+                self.transcribing = False
+
+    def save_audio_chunk(self):
+        if not self.frames:
+            return
+        try:
             self.timestamp = datetime.now().strftime("-%Y-%m-%d_%I-%M-%p")
             # Use a fixed filename for the entire recording
             self.audiofilename = f"{self.folderaudio}/{self.subname}_{self.timestamp}.wav"
-
-            with self.mic as source:
-                self.recognizer.adjust_for_ambient_noise(source)
-                logging.info("Listening...")
-
-                if not self.paused:
-                    try:
-                        audio = self.recognizer.listen(source, timeout=60)  # Set listening timeout to 60 seconds
-                        audio_data.append(audio)
-                    except sr.WaitTimeoutError:
-                        logging.warning("Listening timed out while waiting for phrase to start.")
-                    except Exception as e:
-                        logging.error(f"An error occurred while listening: {e}")
-
-            if len(audio_data) >= 5:  # Buffer 5 chunks before saving
-                self.save_audio_chunk(audio_data)
-                audio_data = []  # Clear the buffer
-
-        # Save and transcribe any remaining audio data
-        if audio_data:
-            self.save_audio_chunk(audio_data)
-        self.transcribe()
-
-    def save_audio_chunk(self, audio_data):
-        with open(self.audiofilename, "ab") as file:
-            for audio in audio_data:
-                file.write(audio.get_wav_data())
+            with wave.open(self.audiofilename, 'wb') as wf:
+                wf.setnchannels(self.CHANNELS)
+                wf.setsampwidth(self.audio.get_sample_size(self.FORMAT))
+                wf.setframerate(self.RATE)
+                wf.writeframes(b''.join(self.frames))
+        except Exception as e:
+            print(f"Error in saving recording: {e}")
         logging.info(f"Audio has been saved to '{self.audiofilename}'.")
 
     def transcribe(self):
@@ -145,15 +164,14 @@ class Phineas_AI:
 
     def pause_transcription(self):
         with self.lock:
-            if self.transcribing:
-                self.paused = True
-                logging.info("Transcription paused.")
-
-    def resume_transcription(self):
-        with self.lock:
-            if self.transcribing and self.paused:
-                self.paused = False
-                logging.info("Transcription resumed.")
+            if not self.paused:
+                if self.transcribing:
+                    self.paused = True
+                    logging.info("Transcription paused.")
+            else:
+                if self.transcribing and self.paused:
+                    self.paused = False
+                    logging.info("Transcription resumed.")
 
     def stop_transcription(self):
         with self.lock:
@@ -162,6 +180,8 @@ class Phineas_AI:
                 logging.info("Transcription stopped.")
                 if self.transcription_thread and self.transcription_thread.is_alive():
                     self.transcription_thread.join()
+        self.save_audio_chunk()
+        self.transcribe()
         
     def openrepo(self):
         path = os.path.join("Phineas_AI", "Records")
