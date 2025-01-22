@@ -1,10 +1,11 @@
-import logging
+// import logging
 import os
 from langchain.chains import ConversationChain
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferWindowMemory
 from dotenv import load_dotenv
 from src.vectorstoreai import EmbeddingManager
+
 
 # Ensure the Logs directory exists
 log_dir = os.path.join("Phineas_AI", "Data", "Logs")
@@ -38,8 +39,18 @@ class ChatBotWithVectors:
 
         # Initialize embedding manager
         self.embedding_manager = EmbeddingManager()
+        self.faiss_index = faiss.IndexFlatL2(512)  # Assuming 512-dimensional embeddings
 
         logging.info("ChatBotWithVectors initialized.")
+
+    def add_to_faiss_index(self, texts):
+        embeddings = self.embedding_manager.create_embeddings(texts)
+        self.faiss_index.add(embeddings)
+
+    def search_faiss_index(self, query, k=5):
+        query_embedding = self.embedding_manager.create_embeddings([query])
+        distances, indices = self.faiss_index.search(query_embedding, k)
+        return indices
 
     def ask(self, query):
         try:
@@ -49,12 +60,20 @@ class ChatBotWithVectors:
             for message in self.chat_history:
                 self.memory.save_context({'input': message['human']}, {'output': message['AI']})
 
-            # Instead of retrieving context from embeddings, we proceed directly with the query
-            full_query = f"User Query:\n{query}"
+            # Check for similar texts in the FAISS index
+            similar_indices = self.search_faiss_index(query)
+            similar_texts = [self.embedding_manager.get_text_by_index(idx) for idx in similar_indices[0]]
+            if similar_texts:
+              # If similar texts are found, include them as context
+                context = "\n".join(similar_texts)
+                full_query = f"User Query:\n{query}\n\nContext:\n{context}"
+            else:
+                # If no similar texts are found, proceed to query the LLM directly
+                full_query = f"User Query:\n{query}"
 
             # Get response from Groq
-            conversation = ConversationChain(llm=self.groq_chat, memory=self.memory)
-            response = conversation(full_query)
+                conversation = ConversationChain(llm=self.groq_chat, memory=self.memory)
+                response = conversation(full_query)
 
             # Update chat history
             message = {'human': query, 'AI': response['response']}
