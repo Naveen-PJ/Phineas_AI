@@ -38,8 +38,11 @@ class Phineas_AI:
 
         # Ensure the Logs directory exists
         log_dir = os.path.join("Phineas_AI","Data","Logs")
+        data=os.path.join("Phineas_AI","Data","Database")
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
+        if not os.path.exists(data):
+            os.makedirs(data)
 
         # Set up logging to save to a file in the Logs directory
         logging.basicConfig(

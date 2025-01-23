@@ -6,7 +6,7 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
 ### Key Features
 
 1. **Transcription**:
-   - Converts the recorded audio into text using speech recognition.
+   - Converts the recorded audio into text using PyAudio
 2. **Summarization**:
    - Generates summaries of the lecture using the `llama3-70b` model, including key points, homework details, and professor's extra discussions.
 3. **Doubt Clarification**:
@@ -24,7 +24,7 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
 - **Langchain**: Used for managing conversation chains and memory.
 - **Langchain_groq**: Used for interacting with the Groq API for summarization.
 - **Kivy**: A Python framework for building the graphical user interface.
-- **Speech Recognition**: Used to record audio.
+- **PyAudio**: Used to record audio.
 - **Whisper**: Used for transcribing audio using the Whisper model.
 - **Dotenv**: Used for loading environment variables from a `.env` file.
 - **spaCy**: Used for generating text embeddings.

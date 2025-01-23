@@ -48,9 +48,20 @@ class ChatBotWithVectors:
             # Save chat history to memory
             for message in self.chat_history:
                 self.memory.save_context({'input': message['human']}, {'output': message['AI']})
+            try:
+                # Query the vector store for relevant information (optional)
+                relevant_texts = self.embedding_manager.query_embeddings(query, k=3)
 
-            # Instead of retrieving context from embeddings, we proceed directly with the query
-            full_query = f"User Query:\n{query}"
+                if relevant_texts:
+                    # If relevant texts are found, include them in the full query
+                    full_query = f"User Query:\n{query}\nRelevant Information:\n" + "\n".join(relevant_texts)
+                else:
+                    # If no relevant texts found, proceed with the original query
+                    full_query = f"User Query:\n{query}"
+
+            except Exception as e:
+                logging.error(f"Error querying vector store: {e}")
+                full_query = f"User Query:\n{query}"
 
             # Get response from Groq
             conversation = ConversationChain(llm=self.groq_chat, memory=self.memory)
@@ -65,7 +76,6 @@ class ChatBotWithVectors:
         except Exception as e:
             logging.error(f"Error during query handling: {e}")
             return f"An error occurred: {e}"
-
 
     def add_to_vector_store(self, texts):
         try:
