@@ -187,7 +187,7 @@ class Phineas_AI:
         self.transcribe()
         
     def openrepo(self):
-        path = os.path.join("Phineas_AI", "Records")
+        path = self.foldersum
         os.startfile(path)
 
 # Example usage
