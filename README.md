@@ -49,7 +49,7 @@ Phineas AI is a Python-based software designed to record entire lectures or clas
    - `langchain`
    - `langchain_groq`
    - `Kivy`
-   - `SpeechRecognition`
+   - `PyAudio`
    - `whisper`
    - `dotenv`
    - `spaCy`
