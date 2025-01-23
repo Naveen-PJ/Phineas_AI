@@ -36,6 +36,8 @@ class ChatBotWithVectors:
             model_name=self.model_name
         )
 
+        self.keypoints=""
+
         # Initialize embedding manager
         self.embedding_manager = EmbeddingManager()
 
@@ -104,7 +106,7 @@ class ChatBotWithVectors:
 
             summary_text = response if isinstance(response, str) else response.get('response', '')
             key_points_text = response_key_points if isinstance(response_key_points, str) else response_key_points.get('response', '')
-
+            self.keypoints=key_points_text
             max_words_per_line = 20  # Maximum words per line
             words = summary_text.split()
             summary_lines = [' '.join(words[i:i + max_words_per_line]) 
