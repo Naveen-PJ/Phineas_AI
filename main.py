@@ -124,14 +124,14 @@ class SubjectSelectedPage(BoxLayout):
 
         main_layout.add_widget(left_layout)
 
-        # To-Do List
-        todo_layout = BoxLayout(orientation='vertical', size_hint_x=0.3, padding=[10, 10])
-        todo_layout.add_widget(Label(text='To-do List', font_size=24, color=(0, 0, 0, 1)))
-        todo_item_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=40)
-        todo_item_layout.add_widget(Label(text='Lorem Ipsum', color=(0, 0, 0, 1)))
-        todo_item_layout.add_widget(Button(text='Delete', size_hint_x=None, width=70, background_color=(0.8, 0.2, 0.2, 1), color=(1, 1, 1, 1)))
-        todo_layout.add_widget(todo_item_layout)
-        main_layout.add_widget(todo_layout)
+        # # To-Do List
+        # todo_layout = BoxLayout(orientation='vertical', size_hint_x=0.3, padding=[10, 10])
+        # todo_layout.add_widget(Label(text='To-do List', font_size=24, color=(0, 0, 0, 1)))
+        # todo_item_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=40)
+        # todo_item_layout.add_widget(Label(text='Lorem Ipsum', color=(0, 0, 0, 1)))
+        # todo_item_layout.add_widget(Button(text='Delete', size_hint_x=None, width=70, background_color=(0.8, 0.2, 0.2, 1), color=(1, 1, 1, 1)))
+        # todo_layout.add_widget(todo_item_layout)
+        # main_layout.add_widget(todo_layout)
 
         self.add_widget(main_layout)
 
