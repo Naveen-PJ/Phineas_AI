@@ -4,3 +4,6 @@ whisper           # For Whisper model
 langchain_groq
 langchain
 dotenv
+spacy
+ffmpeg
+faiss-cpu
